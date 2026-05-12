@@ -1,0 +1,4 @@
+interface:
+  display_name: "Go Cobra CLIs"
+  short_description: "Build exportable Cobra CLI tools"
+  default_prompt: "Use $build-go-cobra-clis to add a new exportable Go CLI tool."
