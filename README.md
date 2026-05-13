@@ -1,6 +1,24 @@
 # Agent CLI Tools
 
-Agent CLI Tools is a home for small Go CLIs that should be easy for AI agents to install and call as executable tools.
+Agent CLI Tools packages focused, agent-friendly command-line utilities as small Go binaries. Each tool is designed to be easy for an AI agent or automation runner to install, configure, call noninteractively, and parse.
+
+The project favors standalone executables with explicit flags, environment-based configuration, stable exit behavior, and optional JSON output. That keeps each tool safe to expose independently while still sharing one release pipeline and contribution model.
+
+## Install
+
+Install released tools with Homebrew:
+
+```bash
+brew install berrydev-ai/tap/slack-post
+```
+
+This README describes the current source tree. Homebrew installs the latest released binary; for unreleased source changes, use `make build` below.
+
+Command-specific usage and environment variables live with each tool:
+
+- [`slack-post`](cmd/slack-post/README.md) posts messages to Slack with `chat.postMessage`.
+
+Use the release archive or Docker examples below when Homebrew is not available.
 
 ## Shape
 
@@ -56,11 +74,11 @@ make test
 
 Each binary owns a README in its command path:
 
-- `cmd/slack-post/README.md`
+- [`cmd/slack-post/README.md`](cmd/slack-post/README.md)
 
 Each binary also owns its environment template next to that README:
 
-- `cmd/slack-post/.env.example`
+- [`cmd/slack-post/.env.example`](cmd/slack-post/.env.example)
 
 Leave secret values blank.
 
@@ -119,4 +137,4 @@ docker build --secret id=github_token,env=GITHUB_TOKEN .
 
 ## Tools
 
-- `slack-post`: see `cmd/slack-post/README.md`
+- [`slack-post`](cmd/slack-post/README.md): post messages to Slack from scripts, agents, and release checks.
