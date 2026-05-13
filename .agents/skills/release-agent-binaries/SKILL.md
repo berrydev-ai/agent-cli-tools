@@ -1,6 +1,8 @@
 ---
 name: release-agent-binaries
 description: Version, package, tag, push, and verify standalone Go CLI binaries in the agent-cli-tools repo. Use when the user asks to release, deploy, publish, version, bump, package, or install one of the binaries under cmd/*, especially with per-binary SemVer tags such as slack-post-v0.1.0 and Makefile targets.
+metadata:
+  internal: true
 ---
 
 # Release Agent Binaries

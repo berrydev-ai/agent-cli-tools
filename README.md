@@ -49,6 +49,7 @@ This keeps unrelated tools from sharing a command namespace while still letting 
 6. Define `var version = "dev"` in the `main` package so release builds can stamp the tag into `--version`.
 7. Add `cmd/<binary-name>/README.md` with usage, inputs, output, build, and package notes.
 8. Add or update `cmd/<binary-name>/.env.example` for every environment variable the tool reads.
+9. Add or update `skills/<binary-name>/SKILL.md` with agent-facing usage and installation instructions so `npx skills add berrydev-ai/agent-cli-tools` can discover it.
 
 ## Build
 
@@ -62,6 +63,28 @@ Binaries are written to `dist/`.
 
 ```bash
 make test
+```
+
+## Install Agent Skills
+
+This repo publishes one skills.sh skill per user-facing CLI tool under `skills/`.
+
+Preview the available tool skills:
+
+```bash
+npx skills add berrydev-ai/agent-cli-tools --list
+```
+
+Install interactively:
+
+```bash
+npx skills add berrydev-ai/agent-cli-tools
+```
+
+Install one tool skill noninteractively:
+
+```bash
+npx skills add berrydev-ai/agent-cli-tools --skill slack-post
 ```
 
 ## Project Docs

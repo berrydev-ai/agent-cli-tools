@@ -1,6 +1,8 @@
 ---
 name: build-go-cobra-clis
 description: Use when building, extending, testing, or packaging Go command-line tools with Cobra, especially AI-agent-facing CLIs that may expose many tools as subcommands or individually exportable binaries.
+metadata:
+  internal: true
 ---
 
 # Build Go Cobra CLIs
