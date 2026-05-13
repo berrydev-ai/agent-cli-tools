@@ -1,0 +1,4 @@
+interface:
+  display_name: "Slack Post"
+  short_description: "Post Slack messages from agents"
+  default_prompt: "Use $slack-post to install and send a Slack message with the slack-post CLI."
