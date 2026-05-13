@@ -1,0 +1,112 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*-v*"
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: "Binary to build from cmd/<tool>"
+        required: true
+        default: "slack-post"
+      version:
+        description: "SemVer to stamp into the binary, e.g. v0.1.0"
+        required: true
+        default: "v0.1.0"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go test ./...
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        goos:
+          - linux
+          - darwin
+        goarch:
+          - amd64
+          - arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Resolve release target
+        shell: bash
+        env:
+          INPUT_TOOL: ${{ github.event.inputs.tool }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            tag="${GITHUB_REF_NAME}"
+            tool=""
+            version=""
+            for dir in cmd/*/; do
+              candidate="$(basename "${dir}")"
+              if [[ "${tag}" == "${candidate}-v"* ]]; then
+                tool="${candidate}"
+                version="${tag#${candidate}-}"
+                break
+              fi
+            done
+            if [[ -z "${tool}" || -z "${version}" ]]; then
+              echo "release tag must match a known cmd/<tool> binary, e.g. slack-post-v0.1.0" >&2
+              exit 1
+            fi
+          else
+            tool="${INPUT_TOOL}"
+            version="${INPUT_VERSION}"
+          fi
+          expected="$(make print-tag TOOL="${tool}" VERSION="${version}")"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${tag}" != "${expected}" ]]; then
+            echo "release tag ${tag} does not match normalized tag ${expected}" >&2
+            exit 1
+          fi
+          echo "TOOL=${tool}" >> "${GITHUB_ENV}"
+          echo "VERSION=${version}" >> "${GITHUB_ENV}"
+      - name: Build binaries
+        run: make package TOOL="${TOOL}" VERSION="${VERSION}" GOOS="${GOOS}" GOARCH="${GOARCH}"
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.tar.gz
