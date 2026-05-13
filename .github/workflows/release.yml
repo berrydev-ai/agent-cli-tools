@@ -103,10 +103,64 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Resolve release notes range
+        id: release-target
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          tool=""
+          version=""
+          for dir in cmd/*/; do
+            candidate="$(basename "${dir}")"
+            if [[ "${tag}" == "${candidate}-v"* ]]; then
+              tool="${candidate}"
+              version="${tag#${candidate}-}"
+              break
+            fi
+          done
+          if [[ -z "${tool}" || -z "${version}" ]]; then
+            echo "release tag must match a known cmd/<tool> binary, e.g. slack-post-v0.1.0" >&2
+            exit 1
+          fi
+          expected="$(make print-tag TOOL="${tool}" VERSION="${version}")"
+          if [[ "${tag}" != "${expected}" ]]; then
+            echo "release tag ${tag} does not match normalized tag ${expected}" >&2
+            exit 1
+          fi
+          previous_tag="$(
+            git tag -l "${tool}-v*" --sort=version:refname |
+              awk -v current="${tag}" '$0 == current { print previous; exit } { previous=$0 }'
+          )"
+          echo "tag_name=${tag}" >> "${GITHUB_OUTPUT}"
+          echo "tool=${tool}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "previous_tag=${previous_tag}" >> "${GITHUB_OUTPUT}"
       - uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
-      - uses: softprops/action-gh-release@v2
+      - name: Publish release with generated notes
+        if: steps.release-target.outputs.previous_tag != ''
+        uses: softprops/action-gh-release@v2
         with:
+          name: ${{ steps.release-target.outputs.tag_name }}
+          body: |
+            Automated release for `${{ steps.release-target.outputs.tool }}` `${{ steps.release-target.outputs.version }}`.
+          generate_release_notes: true
+          previous_tag: ${{ steps.release-target.outputs.previous_tag }}
           files: dist/*.tar.gz
+          fail_on_unmatched_files: true
+      - name: Publish initial release with generated notes
+        if: steps.release-target.outputs.previous_tag == ''
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.release-target.outputs.tag_name }}
+          body: |
+            Automated release for `${{ steps.release-target.outputs.tool }}` `${{ steps.release-target.outputs.version }}`.
+          generate_release_notes: true
+          files: dist/*.tar.gz
+          fail_on_unmatched_files: true

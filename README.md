@@ -46,6 +46,12 @@ Binaries are written to `dist/`.
 make test
 ```
 
+## Project Docs
+
+- [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)
+- [License](LICENSE)
+
 ## Tool Docs
 
 Each binary owns a README in its command path:
@@ -76,6 +82,8 @@ make push-tag TOOL=slack-post VERSION=v0.1.0
 ```
 
 Pushing a `*-v*` tag that matches a known `cmd/<tool>` binary runs `.github/workflows/release.yml`, builds that one binary for Linux and macOS on `amd64` and `arm64`, and publishes tarballs to the GitHub release.
+
+Release notes are generated automatically from merged pull requests and commits, categorized by [.github/release.yml](.github/release.yml), and compared against the previous tag for the same binary.
 
 For example, a tag `slack-post-v0.1.0` produces:
 
