@@ -108,8 +108,8 @@ Pass all required values as flags when environment variables are not available:
 
 ```bash
 slack-post \
-  --token "$SLACK_POST_BOT_TOKEN" \
-  --channel "$SLACK_POST_TARGET_CHANNEL" \
+  --token "<your-slack-bot-token>" \
+  --channel "<channel-id>" \
   --prompt "hello from slack-post"
 ```
 
