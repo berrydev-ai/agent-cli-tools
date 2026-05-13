@@ -7,7 +7,7 @@
 ```bash
 slack-post --prompt "run the e2e test"
 slack-post --target claude --prompt "run the e2e test"
-slack-post --format json --target-member-id "$SLACK_E2E_TARGET_BOT_MEMBER_ID" "run the e2e test"
+slack-post --format json --target-member-id "$SLACK_POST_TARGET_BOT_MEMBER_ID" "run the e2e test"
 ```
 
 ## Required Inputs
@@ -16,16 +16,16 @@ Provide these values as flags or environment variables:
 
 | Flag | Environment variable | Description |
 | --- | --- | --- |
-| `--token` | `SLACK_E2E_BOT_TOKEN` | Slack bot token. |
-| `--channel` | `SLACK_E2E_TARGET_CHANNEL` | Slack channel ID. |
+| `--token` | `SLACK_POST_BOT_TOKEN` | Slack bot token. |
+| `--channel` | `SLACK_POST_TARGET_CHANNEL` | Slack channel ID. |
 | `--prompt` | none | Message text. Positional text is also accepted. |
 
 Optional mention target:
 
 | Flag | Environment variable | Description |
 | --- | --- | --- |
-| `--target-member-id`, `--member-id` | `SLACK_E2E_TARGET_BOT_MEMBER_ID` | Slack member ID to mention. |
-| `--target <name>` | `SLACK_E2E_<TARGET>_BOT_MEMBER_ID` | Resolves a named target, such as `SLACK_E2E_CLAUDE_BOT_MEMBER_ID`. |
+| `--target-member-id`, `--member-id` | `SLACK_POST_TARGET_BOT_MEMBER_ID` | Slack member ID to mention. |
+| `--target <name>` | `SLACK_POST_<TARGET>_BOT_MEMBER_ID` | Resolves a named target, such as `SLACK_POST_CLAUDE_BOT_MEMBER_ID`. |
 
 See the local `.env.example` for the maintained environment template.
 

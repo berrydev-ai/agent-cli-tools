@@ -28,9 +28,9 @@ func TestCommandPostsPositionalPromptWithTargetEnv(t *testing.T) {
 	defer server.Close()
 
 	out, _, err := execute(t, map[string]string{
-		"SLACK_E2E_BOT_TOKEN":            "xoxb-test",
-		"SLACK_E2E_TARGET_CHANNEL":       "C123",
-		"SLACK_E2E_CLAUDE_BOT_MEMBER_ID": "UCLAUDE",
+		"SLACK_POST_BOT_TOKEN":            "xoxb-test",
+		"SLACK_POST_TARGET_CHANNEL":       "C123",
+		"SLACK_POST_CLAUDE_BOT_MEMBER_ID": "UCLAUDE",
 	}, "--url", server.URL, "--target", "claude", "--format", "json", "run", "the", "e2e", "test")
 	if err != nil {
 		t.Fatalf("expected success, got %v", err)
@@ -65,7 +65,7 @@ func TestCommandRequiresNoninteractiveInputs(t *testing.T) {
 	}
 
 	errText := err.Error()
-	for _, want := range []string{"--token or SLACK_E2E_BOT_TOKEN", "--channel or SLACK_E2E_TARGET_CHANNEL"} {
+	for _, want := range []string{"--token or SLACK_POST_BOT_TOKEN", "--channel or SLACK_POST_TARGET_CHANNEL"} {
 		if !strings.Contains(errText, want) {
 			t.Fatalf("error %q does not contain %q", errText, want)
 		}
@@ -80,8 +80,8 @@ func TestCommandReportsSlackAPIError(t *testing.T) {
 	defer server.Close()
 
 	_, _, err := execute(t, map[string]string{
-		"SLACK_E2E_BOT_TOKEN":      "xoxb-test",
-		"SLACK_E2E_TARGET_CHANNEL": "C123",
+		"SLACK_POST_BOT_TOKEN":      "xoxb-test",
+		"SLACK_POST_TARGET_CHANNEL": "C123",
 	}, "--url", server.URL, "--prompt", "hello")
 	if err == nil {
 		t.Fatal("expected Slack API error")

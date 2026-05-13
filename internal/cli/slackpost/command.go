@@ -79,10 +79,10 @@ func NewCommand(opts Options) *cobra.Command {
 		Example: strings.TrimSpace(`
 slack-post --prompt "run the e2e test"
 slack-post --target claude --prompt "run the e2e test"
-slack-post --format json --target-member-id "$SLACK_E2E_TARGET_BOT_MEMBER_ID" "run the e2e test"`),
+slack-post --format json --target-member-id "$SLACK_POST_TARGET_BOT_MEMBER_ID" "run the e2e test"`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			token = firstNonEmpty(token, opts.Env("SLACK_E2E_BOT_TOKEN"))
-			channel = firstNonEmpty(channel, opts.Env("SLACK_E2E_TARGET_CHANNEL"))
+			token = firstNonEmpty(token, opts.Env("SLACK_POST_BOT_TOKEN"))
+			channel = firstNonEmpty(channel, opts.Env("SLACK_POST_TARGET_CHANNEL"))
 
 			if prompt == "" && len(args) > 0 {
 				prompt = strings.Join(args, " ")
@@ -90,11 +90,11 @@ slack-post --format json --target-member-id "$SLACK_E2E_TARGET_BOT_MEMBER_ID" "r
 
 			var targetEnvName string
 			if targetMemberID == "" && target != "" {
-				targetEnvName = "SLACK_E2E_" + normalizeEnvPart(target) + "_BOT_MEMBER_ID"
+				targetEnvName = "SLACK_POST_" + normalizeEnvPart(target) + "_BOT_MEMBER_ID"
 				targetMemberID = opts.Env(targetEnvName)
 			}
 			if targetMemberID == "" {
-				targetMemberID = opts.Env("SLACK_E2E_TARGET_BOT_MEMBER_ID")
+				targetMemberID = opts.Env("SLACK_POST_TARGET_BOT_MEMBER_ID")
 			}
 
 			if format != "text" && format != "json" {
@@ -103,10 +103,10 @@ slack-post --format json --target-member-id "$SLACK_E2E_TARGET_BOT_MEMBER_ID" "r
 
 			var missing []string
 			if token == "" {
-				missing = append(missing, "--token or SLACK_E2E_BOT_TOKEN")
+				missing = append(missing, "--token or SLACK_POST_BOT_TOKEN")
 			}
 			if channel == "" {
-				missing = append(missing, "--channel or SLACK_E2E_TARGET_CHANNEL")
+				missing = append(missing, "--channel or SLACK_POST_TARGET_CHANNEL")
 			}
 			if prompt == "" {
 				missing = append(missing, "--prompt or positional message text")
@@ -134,9 +134,9 @@ slack-post --format json --target-member-id "$SLACK_E2E_TARGET_BOT_MEMBER_ID" "r
 
 	cmd.SetOut(opts.Out)
 	cmd.SetErr(opts.Err)
-	cmd.Flags().StringVar(&token, "token", "", "Slack bot token. Defaults to SLACK_E2E_BOT_TOKEN.")
-	cmd.Flags().StringVar(&channel, "channel", "", "Slack channel ID. Defaults to SLACK_E2E_TARGET_CHANNEL.")
-	cmd.Flags().StringVar(&target, "target", "", "Target name used to resolve SLACK_E2E_<TARGET>_BOT_MEMBER_ID.")
+	cmd.Flags().StringVar(&token, "token", "", "Slack bot token. Defaults to SLACK_POST_BOT_TOKEN.")
+	cmd.Flags().StringVar(&channel, "channel", "", "Slack channel ID. Defaults to SLACK_POST_TARGET_CHANNEL.")
+	cmd.Flags().StringVar(&target, "target", "", "Target name used to resolve SLACK_POST_<TARGET>_BOT_MEMBER_ID.")
 	cmd.Flags().StringVar(&targetMemberID, "target-member-id", "", "Slack member ID to mention, for example U123ABC456.")
 	cmd.Flags().StringVar(&targetMemberID, "member-id", "", "Alias for --target-member-id.")
 	cmd.Flags().StringVar(&prompt, "prompt", "", "Prompt/message text to send.")
