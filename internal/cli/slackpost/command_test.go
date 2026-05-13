@@ -7,16 +7,20 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 )
 
 func TestCommandPostsPositionalPromptWithTargetEnv(t *testing.T) {
 	var gotAuth string
 	var gotPayload messagePayload
+	var decodeErr atomic.Value
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotAuth = r.Header.Get("Authorization")
 		if err := json.NewDecoder(r.Body).Decode(&gotPayload); err != nil {
-			t.Fatalf("decode request body: %v", err)
+			decodeErr.Store(err)
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"ok":true,"channel":"C123","ts":"123.456"}`))
@@ -30,6 +34,9 @@ func TestCommandPostsPositionalPromptWithTargetEnv(t *testing.T) {
 	}, "--url", server.URL, "--target", "claude", "--format", "json", "run", "the", "e2e", "test")
 	if err != nil {
 		t.Fatalf("expected success, got %v", err)
+	}
+	if value := decodeErr.Load(); value != nil {
+		t.Fatalf("decode request body: %v", value)
 	}
 
 	if gotAuth != "Bearer xoxb-test" {

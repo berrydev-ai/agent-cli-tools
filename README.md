@@ -75,9 +75,9 @@ make tag TOOL=slack-post VERSION=v0.1.0
 make push-tag TOOL=slack-post VERSION=v0.1.0
 ```
 
-Pushing a `*-v*` tag runs `.github/workflows/release.yml`, builds that one binary for Linux and macOS on `amd64` and `arm64`, and publishes tarballs to the GitHub release.
+Pushing a `*-v*` tag that matches a known `cmd/<tool>` binary runs `.github/workflows/release.yml`, builds that one binary for Linux and macOS on `amd64` and `arm64`, and publishes tarballs to the GitHub release.
 
-For example, a tag `v0.1.0` produces:
+For example, a tag `slack-post-v0.1.0` produces:
 
 ```text
 slack-post_v0.1.0_linux_amd64.tar.gz

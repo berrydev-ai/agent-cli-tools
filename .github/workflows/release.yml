@@ -16,11 +16,26 @@ on:
         default: "v0.1.0"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release:
+  test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go test ./...
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -36,18 +51,37 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - run: go test ./...
       - name: Resolve release target
         shell: bash
+        env:
+          INPUT_TOOL: ${{ github.event.inputs.tool }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           set -euo pipefail
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             tag="${GITHUB_REF_NAME}"
-            tool="${tag%-v*}"
-            version="v${tag##*-v}"
+            tool=""
+            version=""
+            for dir in cmd/*/; do
+              candidate="$(basename "${dir}")"
+              if [[ "${tag}" == "${candidate}-v"* ]]; then
+                tool="${candidate}"
+                version="${tag#${candidate}-}"
+                break
+              fi
+            done
+            if [[ -z "${tool}" || -z "${version}" ]]; then
+              echo "release tag must match a known cmd/<tool> binary, e.g. slack-post-v0.1.0" >&2
+              exit 1
+            fi
           else
-            tool="${{ inputs.tool }}"
-            version="${{ inputs.version }}"
+            tool="${INPUT_TOOL}"
+            version="${INPUT_VERSION}"
+          fi
+          expected="$(make print-tag TOOL="${tool}" VERSION="${version}")"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${tag}" != "${expected}" ]]; then
+            echo "release tag ${tag} does not match normalized tag ${expected}" >&2
+            exit 1
           fi
           echo "TOOL=${tool}" >> "${GITHUB_ENV}"
           echo "VERSION=${version}" >> "${GITHUB_ENV}"
@@ -60,11 +94,14 @@ jobs:
         with:
           name: binaries-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/*.tar.gz
+          if-no-files-found: error
 
   publish:
     needs: release
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:

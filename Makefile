@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-BINS := $(notdir $(wildcard cmd/*))
+BINS := $(notdir $(patsubst %/,%,$(wildcard cmd/*/)))
 DIST_DIR ?= dist
 TOOL ?=
 VERSION ?=
@@ -11,9 +11,10 @@ RELEASE_OSES ?= linux darwin
 RELEASE_ARCHES ?= amd64 arm64
 TAG_NAME = $(TOOL)-$(VERSION)
 ARCHIVE = $(DIST_DIR)/$(TOOL)_$(VERSION)_$(GOOS)_$(GOARCH).tar.gz
-SEMVER_PATTERN = ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$$
+export TOOL
+export VERSION
 
-.PHONY: help list test build build-tool package release-archives print-tag tag push-tag clean check-tool check-version
+.PHONY: help list test build build-tool package release-archives print-tag tag push-tag clean check-tool check-version check-build-version
 
 help:
 	@printf 'Targets:\n'
@@ -33,20 +34,22 @@ list:
 test:
 	go test ./...
 
-build:
+build: check-build-version
 	@mkdir -p "$(DIST_DIR)"
-	@for bin in $(BINS); do \
+	@set -euo pipefail; \
+	for bin in $(BINS); do \
 		echo "building $$bin ($(BUILD_VERSION))"; \
 		go build -trimpath -ldflags "-s -w -X main.version=$(BUILD_VERSION)" -o "$(DIST_DIR)/$$bin" "./cmd/$$bin"; \
 	done
 
-build-tool: check-tool
+build-tool: check-tool check-build-version
 	@mkdir -p "$(DIST_DIR)"
 	go build -trimpath -ldflags "-s -w -X main.version=$(BUILD_VERSION)" -o "$(DIST_DIR)/$(TOOL)" "./cmd/$(TOOL)"
 
 package: check-tool check-version
 	@mkdir -p "$(DIST_DIR)"
-	@tmp_dir="$$(mktemp -d)"; \
+	@set -euo pipefail; \
+	tmp_dir="$$(mktemp -d)"; \
 	trap 'rm -rf "$$tmp_dir"' EXIT; \
 	echo "packaging $(TOOL) $(VERSION) for $(GOOS)/$(GOARCH)"; \
 	GOOS="$(GOOS)" GOARCH="$(GOARCH)" CGO_ENABLED=0 \
@@ -55,7 +58,8 @@ package: check-tool check-version
 	echo "$(ARCHIVE)"
 
 release-archives: check-tool check-version
-	@for os in $(RELEASE_OSES); do \
+	@set -euo pipefail; \
+	for os in $(RELEASE_OSES); do \
 		for arch in $(RELEASE_ARCHES); do \
 			$(MAKE) --no-print-directory package TOOL="$(TOOL)" VERSION="$(VERSION)" GOOS="$$os" GOARCH="$$arch"; \
 		done; \
@@ -79,21 +83,10 @@ clean:
 	rm -rf "$(DIST_DIR)"
 
 check-tool:
-	@if [ -z "$(TOOL)" ]; then \
-		echo "TOOL is required, e.g. TOOL=slack-post" >&2; \
-		exit 2; \
-	fi
-	@if [ ! -d "cmd/$(TOOL)" ]; then \
-		echo "unknown TOOL=$(TOOL); available: $(BINS)" >&2; \
-		exit 2; \
-	fi
+	@scripts/validate-release-inputs.sh tool
 
 check-version:
-	@if [ -z "$(VERSION)" ]; then \
-		echo "VERSION is required, e.g. VERSION=v0.1.0" >&2; \
-		exit 2; \
-	fi
-	@if ! printf '%s\n' "$(VERSION)" | grep -Eq '$(SEMVER_PATTERN)'; then \
-		echo "VERSION must be SemVer with a leading v, e.g. v0.1.0" >&2; \
-		exit 2; \
-	fi
+	@scripts/validate-release-inputs.sh version
+
+check-build-version:
+	@if [ -n "$${VERSION:-}" ]; then scripts/validate-release-inputs.sh version; fi
