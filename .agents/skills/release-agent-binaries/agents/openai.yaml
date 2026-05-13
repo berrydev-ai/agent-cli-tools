@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release Agent Binaries"
+  short_description: "Version and release repo CLI binaries"
+  default_prompt: "Use $release-agent-binaries to version and release the slack-post binary."

@@ -37,6 +37,8 @@ cmd/
   agent-tools/
     main.go
   github-issue-create/
+    .env.example
+    README.md
     main.go
 internal/
   cli/
@@ -60,6 +62,8 @@ Rules:
 - Let standalone binaries wrap the same command package used by the suite command.
 - Keep reusable non-CLI behavior outside Cobra packages so it can be tested without CLI wiring.
 - Use `pkg/` only when external import is intentional.
+- Add `cmd/<binary>/README.md` for every exported binary with usage, required inputs, output formats, build, and package examples.
+- Add `cmd/<binary>/.env.example` next to that README for every environment variable the binary reads. Leave secret values blank.
 
 ## Agent Contract
 
@@ -81,7 +85,8 @@ Design every command so an AI agent can call it predictably:
 4. Use `RunE`, `Args`, `cmd.Context()`, and returned errors. Reserve `os.Exit` for `main.go`.
 5. Add local flags by default. Use persistent flags only for concerns inherited by every child command.
 6. Inject I/O with `cmd.SetOut`, `cmd.SetErr`, and constructor options. Avoid `fmt.Println` in command logic.
-7. Verify with tests, a binary build, `--help`, and at least one realistic command invocation.
+7. Update `cmd/<binary>/README.md` and `cmd/<binary>/.env.example` for the tool contract.
+8. Verify with tests, a binary build, `--help`, and at least one realistic command invocation.
 
 ## Command Pattern
 
